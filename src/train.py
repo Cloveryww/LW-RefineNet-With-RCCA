@@ -130,12 +130,16 @@ def create_segmenter(
     ):
     """Create Encoder; for now only ResNet [50,101,152]"""
     from models.resnet import rf_lw50, rf_lw101, rf_lw152
+    from models.mobilenet import mbv2
     if str(net) == '50':
         return rf_lw50(num_classes, imagenet=pretrained)
     elif str(net) == '101':
         return rf_lw101(num_classes, imagenet=pretrained)
     elif str(net) == '152':
         return rf_lw152(num_classes, imagenet=pretrained)
+    elif str(net) == 'mbv2':
+        return mbv2(num_classes, imagenet=pretrained)
+        #return mbv2(num_classes, imagenet=False,pretrained=False)
     else:
         raise ValueError("{} is not supported".format(str(net)))
 
@@ -167,7 +171,8 @@ def create_loaders(
     from torchvision import transforms
     from torch.utils.data import DataLoader, random_split
     # Custom libraries
-    from datasets import NYUDataset as Dataset
+    #from datasets import NYUDataset as Dataset
+    from datasets import PascalVOCDataset as Dataset
     from datasets import Pad, RandomCrop, RandomMirror, ResizeShorterScale, ToTensor, Normalise
 
     ## Transformations during training ##

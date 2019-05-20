@@ -64,6 +64,7 @@ class Saver():
             logger.info(" New best value {:.4f}, was {:.4f}".format(new_val, self.best_val))
             self.best_val = new_val
             dict_to_save['best_val'] = new_val
+            #torch.save(dict_to_save, '{}/checkpoint{}.pth.tar'.format(self.ckpt_dir,self._counter))
             torch.save(dict_to_save, '{}/checkpoint.pth.tar'.format(self.ckpt_dir))
             return True
         return False

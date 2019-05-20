@@ -39,7 +39,9 @@ data_info = {
     }
 
 models_urls = {
-    'mbv2_voc': 'https://cloudstor.aarnet.edu.au/plus/s/PsEL9uEuxOtIxJV/download'
+    'mbv2_voc': 'https://cloudstor.aarnet.edu.au/plus/s/PsEL9uEuxOtIxJV/download',
+    'mbv2_backbone_voc': 'null',
+    'mbv2x1_imagenet': 'null'
     }
 
 class InvertedResidualBlock(nn.Module):
@@ -158,7 +160,7 @@ class MBv2(nn.Module):
         return nn.Sequential(*layers)
 
 
-def mbv2(num_classes, pretrained=True, **kwargs):
+def mbv2(num_classes, imagenet=False, pretrained=True, **kwargs):
     """Constructs the network.
 
     Args:
@@ -166,11 +168,32 @@ def mbv2(num_classes, pretrained=True, **kwargs):
 
     """
     model = MBv2(num_classes, **kwargs)
-    if pretrained:
+    if imagenet:
+        key = 'mbv2_backbone_voc'
+        #key = 'mbv2x1_imagenet'
+        url = models_urls[key]
+        model.load_state_dict(maybe_download(key, url), strict=False)
+        #model.load_state_dict(maybe_download(key, url, map_location={'cuda:1':'cuda:0'}), strict=False)
+    elif pretrained:
         dataset = data_info.get(num_classes, None)
         if dataset:
             bname = 'mbv2_' + dataset.lower()
             key = 'rf_lw' + bname
             url = models_urls[bname]
             model.load_state_dict(maybe_download(key, url), strict=False)
+    return model
+def rf_lw_mbv2_model(num_classes, backbone, url, **kwargs):
+    model = MBv2(num_classes, **kwargs)
+    ckpt = torch.load(url)
+    if 'segmenter' in ckpt:
+        # original saved file with DataParallel
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in ckpt['segmenter'].items():
+            name = k[7:] # remove `module.`
+            new_state_dict[name] = v
+        model.load_state_dict(new_state_dict)
+        #model.load_state_dict(ckpt['segmenter'])
+    else:
+        print ("load_state_dict error")
     return model

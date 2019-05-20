@@ -246,6 +246,7 @@ def rf_lw50(num_classes, imagenet=False, pretrained=True, **kwargs):
         key = '50_imagenet'
         url = models_urls[key]
         model.load_state_dict(maybe_download(key, url), strict=False)
+        #model.load_state_dict(maybe_download(key, url))
     elif pretrained:
         dataset = data_info.get(num_classes, None)
         if dataset:
@@ -253,6 +254,7 @@ def rf_lw50(num_classes, imagenet=False, pretrained=True, **kwargs):
             key = 'rf_lw' + bname
             url = models_urls[bname]
             model.load_state_dict(maybe_download(key, url), strict=False)
+            #model.load_state_dict(maybe_download(key, url))
     return model
 
 def rf_lw101(num_classes, imagenet=False, pretrained=True, **kwargs):
@@ -283,4 +285,19 @@ def rf_lw152(num_classes, imagenet=False, pretrained=True, **kwargs):
             key = 'rf_lw' + bname
             url = models_urls[bname]
             model.load_state_dict(maybe_download(key, url), strict=False)
+    return model
+def rf_lw_model(num_classes, backbone, url, **kwargs):
+    model = ResNetLW(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, **kwargs)
+    ckpt = torch.load(url)
+    if 'segmenter' in ckpt:
+        # original saved file with DataParallel
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in ckpt['segmenter'].items():
+            name = k[7:] # remove `module.`
+            new_state_dict[name] = v
+        model.load_state_dict(new_state_dict)
+        #model.load_state_dict(ckpt['segmenter'])
+    else:
+        print ("load_state_dict error")
     return model
